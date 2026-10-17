@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- Security policy. If you edit an inline script block, its sha256 hash below must be updated or the app will not run. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-aTuE1YQRfvNxHROt8L2arsISuyJCzyB9mAph6+MPf+k=' 'sha256-zE+2rJzt3bkp9E6D5nApeZYXD63HynfLR57rJOoEyVo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.github.com blob: data:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b7a86">
 <meta name="robots" content="noindex, nofollow">
@@ -275,7 +277,7 @@ function worst(list){let w='';list.forEach(i=>{const c=status(i)[0];if(c==='bad'
 function chips(list){const c={ok:0,warn:0,bad:0,nil:0};list.forEach(i=>c[status(i)[0]]++);return[['ok','covered'],['warn','ending soon'],['bad','expired'],['nil','with no end date']].filter(([k])=>c[k]).map(([k,l])=>'<span class="chip '+k+'">'+c[k]+' '+l+'</span>').join('');}
 
 /* ---------- views ---------- */
-function linkify(k,v){if(k==='docs'&&/^https?:\/\//i.test(v))return'<a href="'+esc(v)+'" target="_blank" rel="noopener">Open link</a>';return esc(v);}
+function linkify(k,v){if(k==='docs'&&/^https?:\/\//i.test(v))return'<a href="'+esc(v)+'" target="_blank" rel="noopener noreferrer">Open link</a>';return esc(v);}
 function view(it,showRoom){
   const[cls,label]=status(it),p=isPolicy(it.type);
   const fl=fieldsFor(it.type).filter(([k])=>p?(k!=='provider'&&k!=='model'):(k!=='brand'&&k!=='model'));
@@ -386,6 +388,8 @@ let upload={item:null,text:''};
 const docCache=new Map();
 const camInput=document.getElementById('caminput'),docInput=document.getElementById('docinput'),viewer=document.getElementById('viewer');
 const pathUrl=path=>repoUrl()+'/contents/'+path.split('/').map(encodeURIComponent).join('/');
+// Security: documents may only live under files/ as .jpg or .pdf, so an imported file can't point a delete at warranties.json.
+const okPath=p=>typeof p==='string'&&/^files\/(?:[^/]+\/)+[^/]+\.(jpg|pdf)$/.test(p)&&!p.split('/').some(s=>s==='.'||s==='..');
 function needOnline(what){if(!cfg.token){msg='Connect to your data repo first.';render();return false;}if(!navigator.onLine){msg=what+' needs an internet connection. Your text details still work offline.';render();return false;}return true;}
 function pickDocs(itemId,camera){if(!needOnline('Adding documents'))return;upload.pending=itemId;(camera?camInput:docInput).click();}
 [camInput,docInput].forEach(inp=>inp.addEventListener('change',()=>{const files=[...inp.files];inp.value='';const id=upload.pending;upload.pending=null;if(files.length&&id)uploadDocs(id,files,inp===camInput);}));
@@ -437,6 +441,7 @@ async function uploadDocs(itemId,files,camera){
 }
 async function fetchDoc(f){
   if(docCache.has(f.id))return docCache.get(f.id);
+  if(!okPath(f.path))throw new Error('This document’s location doesn’t look right, so it wasn’t opened.');
   const r=await gh(pathUrl(f.path),{accept:'application/vnd.github.raw+json'});
   if(r.status===404)throw new Error('This document isn’t in the repo any more.');
   if(!r.ok)throw new Error('Couldn’t load it from GitHub ('+r.status+').');
@@ -444,7 +449,7 @@ async function fetchDoc(f){
   docCache.set(f.id,url);return url;
 }
 async function removeRemote(f){
-  if(!navigator.onLine||!cfg.token)return;
+  if(!navigator.onLine||!cfg.token||!okPath(f.path))return;
   try{
     let sha=f.sha;
     if(!sha){const r=await gh(pathUrl(f.path));if(!r.ok)return;sha=(await r.json()).sha;}
@@ -483,7 +488,7 @@ async function loadViewer(f){
     if(f.kind==='image'){setBody('<img src="'+url+'" alt="'+esc(f.name)+'">');return;}
     if(!pdfLib){pdfLib=await import('./pdfjs/pdf.min.js');pdfLib.GlobalWorkerOptions.workerSrc=new URL('./pdfjs/pdf.worker.min.js',location.href).href;}
     const data=new Uint8Array(await (await fetch(url)).arrayBuffer());
-    const pdf=await pdfLib.getDocument({data}).promise;
+    const pdf=await pdfLib.getDocument({data,isEvalSupported:false}).promise;
     if(vstate.gen!==gen){pdf.destroy();return;}
     vstate.pdf=pdf;await renderPdf(gen);
   }catch(e){if(vstate.gen===gen)setBody('<p>'+esc((e&&e.message)||'Couldn’t open it.')+'</p><p>You can still use Download to open it in another app.</p>');}

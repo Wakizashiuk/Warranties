@@ -2,7 +2,7 @@
 
 A small offline-friendly web app for tracking home warranties, guarantees and renewals (appliances, car insurance, home policies).
 
-This repo holds **only the app code**. The actual warranty list lives in a separate **private** repo (`home-warranties-data`, file `warranties.json`). The app reads and writes that file through the GitHub API using a fine-grained access token that each device enters once. Without a token, the app shows nothing but its setup screen.
+This repo holds **only the app code**. The actual warranty list lives in a separate **private** repo (`Warranties-data`, file `warranties.json`). The app reads and writes that file through the GitHub API using a fine-grained access token that each device enters once. Without a token, the app shows nothing but its setup screen.
 
 ## How it works
 
@@ -19,7 +19,7 @@ This repo holds **only the app code**. The actual warranty list lives in a separ
 3. **A token for each device:** GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token.
    - Repository access: Only select repositories → `Warranties-data`
    - Permissions → Repository permissions → Contents: **Read and write**
-   - Pick the longest expiry offered, and note the date.
+   - Set an expiry of 90 days and add a calendar reminder to replace it. A short expiry limits the damage if a phone is lost or the token leaks.
 4. **On each phone:** open the Pages link, paste the token, give the device a name, then use the browser menu → Add to Home screen.
 
 If a phone is lost, delete that device's token on GitHub; the other phone keeps working.
