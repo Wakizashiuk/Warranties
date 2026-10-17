@@ -94,7 +94,7 @@ h3{font-size:15px;margin:0 0 10px}
 .docbtns{display:flex;gap:8px;flex-wrap:wrap}
 .viewer{position:fixed;inset:0;z-index:50;background:#0b0f14;color:#fff;display:flex;flex-direction:column;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
 .viewer[hidden]{display:none}
-.vbar{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.vbar{display:flex;align-items:center;gap:8px;padding:10px 12px;flex-wrap:wrap}
 .vbar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
 .vbody{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:8px;touch-action:pan-x pan-y pinch-zoom}
 .vbody img{max-width:100%;height:auto;display:block;background:#fff}
@@ -105,6 +105,13 @@ h3{font-size:15px;margin:0 0 10px}
 .viewer .ghost{color:#fff;border-color:#55636f}
 .viewer .danger{color:#ff8a80;border-color:#ff8a80}
 .viewer .primary{background:#4fc3cf;color:#06252a;border-color:#4fc3cf}
+.vbody.vpdf{display:block;align-items:initial;justify-content:initial;padding:8px 0}
+.pdfpages{display:inline-block;min-width:100%;text-align:center}
+.pdfpages canvas{display:block;margin:0 auto 10px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.5)}
+.vzoom{display:flex;gap:6px}
+.vzoom button{min-width:40px}
+a.vbtn{display:inline-flex;align-items:center;text-decoration:none;font-weight:600;border:1px solid #55636f;border-radius:8px;color:#fff;padding:6px 11px;font-size:13px}
+a.vbtn[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -444,30 +451,63 @@ async function removeRemote(f){
     await gh(pathUrl(f.path),{method:'DELETE',body:{message:'Remove document'+(cfg.device?' ('+cfg.device+')':''),sha}});
   }catch(e){}
 }
-let vstate={id:null,confirm:false};
-function openViewer(id){vstate={id,confirm:false};drawViewer();}
-function closeViewer(){vstate={id:null,confirm:false};viewer.hidden=true;viewer.innerHTML='';document.body.style.overflow='';}
-function drawViewer(body){
-  const f=state.files.find(x=>x.id===vstate.id);if(!f){closeViewer();return;}
+let vstate={id:null,confirm:false,zoom:1,pdf:null,gen:0};
+let pdfLib=null;
+const fileExt=f=>f.kind==='image'?'jpg':'pdf';
+const safeName=n=>String(n||'Document').replace(/[\\/:*?"<>|]+/g,'-').trim()||'Document';
+function openViewer(id){
+  const f=state.files.find(x=>x.id===id);if(!f)return;
+  vstate={id,confirm:false,zoom:1,pdf:null,gen:vstate.gen+1};
   const it=state.items.find(i=>i.id===f.item)||{};
   viewer.hidden=false;document.body.style.overflow='hidden';
-  viewer.innerHTML='<div class="vbar"><b>'+esc(f.name)+'</b><button class="ghost small" data-vclose>Close</button></div><div class="vbody" id="vbody">'+(body||'<p>Loading…</p>')+'</div>'+
-  '<form class="vfoot" data-vrename><label>Name<input name="name" value="'+esc(f.name)+'" maxlength="80"></label><button type="submit" class="ghost small">Rename</button>'+(vstate.confirm?'<button type="button" class="danger small" data-vdel>Confirm delete</button>':'<button type="button" class="ghost small" data-vask>Delete</button>')+'</form>'+
-  '<p style="margin:0 12px 10px;font-size:12px;color:#9aa8b8">'+esc(it.name||'')+(f.addedAt?' · added '+new Date(f.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'')+(f.by?' by '+esc(f.by):'')+'</p>';
-  if(!body)loadViewer(f);
+  viewer.innerHTML='<div class="vbar"><b id="vtitle">'+esc(f.name)+'</b>'+
+    (f.kind==='pdf'?'<span class="vzoom"><button class="ghost small" data-vzoom="-1" aria-label="Zoom out">−</button><button class="ghost small" data-vzoom="1" aria-label="Zoom in">+</button></span>':'')+
+    '<a class="ghost small vbtn" id="vdl" hidden>Download</a><button class="ghost small" data-vclose>Close</button></div>'+
+    '<div class="vbody'+(f.kind==='pdf'?' vpdf':'')+'" id="vbody"><p>Loading…</p></div>'+
+    '<form class="vfoot" data-vrename id="vfoot"></form>'+
+    '<p style="margin:0 12px 10px;font-size:12px;color:#9aa8b8">'+esc(it.name||'')+(f.addedAt?' · added '+new Date(f.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'')+(f.by?' by '+esc(f.by):'')+'</p>';
+  drawFoot();loadViewer(f);
 }
+function drawFoot(){
+  const f=state.files.find(x=>x.id===vstate.id),el=document.getElementById('vfoot');if(!f||!el)return;
+  el.innerHTML='<label>Name<input name="name" value="'+esc(f.name)+'" maxlength="80"></label><button type="submit" class="ghost small">Rename</button>'+(vstate.confirm?'<button type="button" class="danger small" data-vdel>Confirm delete</button>':'<button type="button" class="ghost small" data-vask>Delete</button>');
+}
+function setBody(h){const b=document.getElementById('vbody');if(b)b.innerHTML=h;}
+function closeViewer(){if(vstate.pdf){try{vstate.pdf.destroy();}catch(e){}}vstate={id:null,confirm:false,zoom:1,pdf:null,gen:vstate.gen+1};viewer.hidden=true;viewer.innerHTML='';document.body.style.overflow='';}
 async function loadViewer(f){
-  if(!navigator.onLine){drawViewer('<p>Documents need an internet connection to open. Your text details still work offline.</p>');return;}
+  const gen=vstate.gen;
+  if(!navigator.onLine){setBody('<p>Documents need an internet connection to open. Your text details still work offline.</p>');return;}
   try{
-    const url=await fetchDoc(f);if(vstate.id!==f.id)return;
-    if(f.kind==='image')drawViewer('<img src="'+url+'" alt="'+esc(f.name)+'">');
-    else drawViewer('<p>PDF ready.</p><p><a class="primary" style="display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600" href="'+url+'" download="'+esc(f.name)+'.pdf" target="_blank" rel="noopener">Open PDF</a></p>');
-  }catch(e){if(vstate.id===f.id)drawViewer('<p>'+esc((e&&e.message)||'Couldn’t open it.')+'</p>');}
+    const url=await fetchDoc(f);if(vstate.gen!==gen)return;
+    const dl=document.getElementById('vdl');if(dl){dl.href=url;dl.download=safeName(f.name)+'.'+fileExt(f);dl.hidden=false;}
+    if(f.kind==='image'){setBody('<img src="'+url+'" alt="'+esc(f.name)+'">');return;}
+    if(!pdfLib){pdfLib=await import('./pdfjs/pdf.min.js');pdfLib.GlobalWorkerOptions.workerSrc=new URL('./pdfjs/pdf.worker.min.js',location.href).href;}
+    const data=new Uint8Array(await (await fetch(url)).arrayBuffer());
+    const pdf=await pdfLib.getDocument({data}).promise;
+    if(vstate.gen!==gen){pdf.destroy();return;}
+    vstate.pdf=pdf;await renderPdf(gen);
+  }catch(e){if(vstate.gen===gen)setBody('<p>'+esc((e&&e.message)||'Couldn’t open it.')+'</p><p>You can still use Download to open it in another app.</p>');}
+}
+async function renderPdf(gen){
+  const pdf=vstate.pdf,body=document.getElementById('vbody');if(!pdf||!body)return;
+  const holder=document.createElement('div');holder.className='pdfpages';holder.id='pdfpages';
+  const fitW=Math.min(body.clientWidth-16,900),cssW=Math.round(fitW*vstate.zoom),dpr=Math.min(window.devicePixelRatio||1,2);
+  body.innerHTML='';body.appendChild(holder);
+  const pages=Math.min(pdf.numPages,40);
+  for(let n=1;n<=pages;n++){
+    if(vstate.gen!==gen)return;
+    const page=await pdf.getPage(n),base=page.getViewport({scale:1}),sc=cssW/base.width,vp=page.getViewport({scale:sc*dpr});
+    const c=document.createElement('canvas');c.width=Math.floor(vp.width);c.height=Math.floor(vp.height);c.style.width=cssW+'px';c.style.height=Math.round(base.height*sc)+'px';c.setAttribute('aria-label','Page '+n);
+    holder.appendChild(c);
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  }
+  if(pdf.numPages>pages){const p=document.createElement('p');p.textContent='Showing the first '+pages+' of '+pdf.numPages+' pages. Use Download to see the rest.';holder.appendChild(p);}
 }
 viewer.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;const d=t.dataset;
   if('vclose' in d){closeViewer();return;}
-  if('vask' in d){vstate.confirm=true;const b=document.getElementById('vbody');drawViewer(b?b.innerHTML:'');return;}
+  if(d.vzoom){const z=[0.75,1,1.5,2,3],i=z.indexOf(vstate.zoom),ni=Math.max(0,Math.min(z.length-1,i+Number(d.vzoom)));if(z[ni]!==vstate.zoom){vstate.zoom=z[ni];vstate.gen++;renderPdf(vstate.gen);}return;}
+  if('vask' in d){vstate.confirm=true;drawFoot();return;}
   if('vdel' in d){
     if(!needOnline('Deleting documents')){closeViewer();return;}
     const f=state.files.find(x=>x.id===vstate.id);closeViewer();if(!f)return;
@@ -476,9 +516,9 @@ viewer.addEventListener('click',e=>{
 });
 viewer.addEventListener('submit',e=>{
   e.preventDefault();const v=readForm(e.target);const id=vstate.id;const name=(v.name||'').trim();if(!name)return;
-  const b=document.getElementById('vbody');const keep=b?b.innerHTML:'';
   commit(s=>{const f=s.files.find(x=>x.id===id);if(f){f.name=name;f.updatedAt=now();}},'Document renamed.');
-  vstate={id,confirm:false};drawViewer(keep);
+  const f=state.files.find(x=>x.id===id),t=document.getElementById('vtitle'),dl=document.getElementById('vdl');
+  if(t)t.textContent=name;if(dl&&f)dl.download=safeName(name)+'.'+fileExt(f);vstate.confirm=false;drawFoot();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!viewer.hidden)closeViewer();});
 

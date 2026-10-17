@@ -10,6 +10,7 @@ This repo holds **only the app code**. The actual warranty list lives in a separ
 - When online, each device syncs with the private repo. Edits from different devices are merged item by item (newest change wins), and deletions carry across.
 - Every save is a commit in the private repo, so there's a full history of changes and who made them.
 - Photos and PDFs of receipts and certificates can be attached to any item. Photos are shrunk to about 500 KB, and everything is stored in the private repo under `files/`. Documents need a connection to add or open; the text works offline.
+- PDFs open inside the app using [PDF.js](https://mozilla.github.io/pdf.js/) (in `pdfjs/`, Apache 2.0 licence), with zoom and a Download button.
 
 ## Setup
 
