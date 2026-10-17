@@ -106,7 +106,7 @@ const LS={
 };
 const DEFAULT_CFG={owner:'Wakizashiuk',repo:'Warranties-data',path:'warranties.json',token:'',device:''};
 let cfg=Object.assign({},DEFAULT_CFG,LS.get('cfg',{}));
-let state=normalise(LS.get('data',null)||{version:2,rooms:[],items:[],deleted:{}});
+let state=null; // loaded below, once everything it needs is defined
 let dirty=LS.get('dirty',false);
 let lastSync=LS.get('lastSync',null);
 let sync={busy:false,err:'',missing:false};
@@ -391,7 +391,7 @@ window.addEventListener('offline',renderBg);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')doSync();});
 setInterval(()=>{if(!sync.busy)renderBg();},60000);
 
-try{render();}catch(e){window.__hwErr(e&&e.message||String(e));}
+try{state=normalise(LS.get('data',null)||{version:2,rooms:[],items:[],deleted:{}});render();}catch(e){window.__hwErr(e&&e.message||String(e));}
 doSync();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 })();

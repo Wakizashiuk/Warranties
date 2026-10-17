@@ -1,6 +1,6 @@
 // Offline support: keeps the app itself available without a connection.
 // Your warranty data is never cached here; it lives on the device and in your private repo.
-const CACHE = 'hw-app-v2';
+const CACHE = 'hw-app-v3';
 const SHELL = ['./index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-180.png'];
 
 self.addEventListener('install', e => {
