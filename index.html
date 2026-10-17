@@ -88,7 +88,12 @@ h3{font-size:15px;margin:0 0 10px}
 </style>
 </head>
 <body>
-<main id="root"></main>
+<main id="root"><h1>Home warranties</h1><p class="lede" id="boot">Loading your warranties…</p></main>
+<script>
+window.__hwErr=function(m){var r=document.getElementById('root');if(!r)return;var d=document.createElement('div');d.className='banner bad';d.textContent='Something went wrong: '+m+' — send Claude a screenshot of this.';r.insertBefore(d,r.firstChild);};
+window.addEventListener('error',function(e){window.__hwErr((e&&e.message)||'unknown error');});
+window.addEventListener('unhandledrejection',function(e){window.__hwErr(String((e&&e.reason&&e.reason.message)||(e&&e.reason)||'unknown error'));});
+</script>
 <input type="file" id="importfile" accept="application/json,.json" hidden>
 <script>
 (function(){
@@ -99,7 +104,7 @@ const LS={
   set(k,v){try{localStorage.setItem('hw.'+k,JSON.stringify(v));}catch(e){}},
   del(k){try{localStorage.removeItem('hw.'+k);}catch(e){}}
 };
-const DEFAULT_CFG={owner:'Wakizashiuk',repo:'home-warranties-data',path:'warranties.json',token:'',device:''};
+const DEFAULT_CFG={owner:'Wakizashiuk',repo:'Warranties-data',path:'warranties.json',token:'',device:''};
 let cfg=Object.assign({},DEFAULT_CFG,LS.get('cfg',{}));
 let state=normalise(LS.get('data',null)||{version:2,rooms:[],items:[],deleted:{}});
 let dirty=LS.get('dirty',false);
@@ -386,7 +391,7 @@ window.addEventListener('offline',renderBg);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')doSync();});
 setInterval(()=>{if(!sync.busy)renderBg();},60000);
 
-render();
+try{render();}catch(e){window.__hwErr(e&&e.message||String(e));}
 doSync();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 })();
