@@ -85,6 +85,26 @@ textarea{min-height:70px;resize:vertical}
 h3{font-size:15px;margin:0 0 10px}
 .search{margin-bottom:14px}
 .where{font-size:12px;color:var(--sub)}
+.docs{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.docs .lbl{font-size:12.5px;color:var(--sub)}
+.doclist{display:flex;flex-wrap:wrap;gap:6px}
+.doc{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-weight:500;font-size:13px;padding:6px 10px;border-radius:999px;background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.doc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.doc svg{width:16px;height:16px;flex:none}
+.docbtns{display:flex;gap:8px;flex-wrap:wrap}
+.viewer{position:fixed;inset:0;z-index:50;background:#0b0f14;color:#fff;display:flex;flex-direction:column;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.viewer[hidden]{display:none}
+.vbar{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.vbar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.vbody{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:8px;touch-action:pan-x pan-y pinch-zoom}
+.vbody img{max-width:100%;height:auto;display:block;background:#fff}
+.vbody p{color:#d6dde5;text-align:center;line-height:1.5;padding:0 20px}
+.vfoot{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;align-items:end}
+.vfoot label{color:#c3ccd6;flex:1;min-width:180px}
+.vfoot input{background:#1b222b;color:#fff;border-color:#3a4654}
+.viewer .ghost{color:#fff;border-color:#55636f}
+.viewer .danger{color:#ff8a80;border-color:#ff8a80}
+.viewer .primary{background:#4fc3cf;color:#06252a;border-color:#4fc3cf}
 </style>
 </head>
 <body>
@@ -95,6 +115,9 @@ window.addEventListener('error',function(e){window.__hwErr((e&&e.message)||'unkn
 window.addEventListener('unhandledrejection',function(e){window.__hwErr(String((e&&e.reason&&e.reason.message)||(e&&e.reason)||'unknown error'));});
 </script>
 <input type="file" id="importfile" accept="application/json,.json" hidden>
+<input type="file" id="caminput" accept="image/*" capture="environment" hidden>
+<input type="file" id="docinput" accept="image/*,application/pdf" multiple hidden>
+<div class="viewer" id="viewer" hidden></div>
 <script>
 (function(){
 'use strict';
@@ -106,7 +129,7 @@ const LS={
 };
 const DEFAULT_CFG={owner:'Wakizashiuk',repo:'Warranties-data',path:'warranties.json',token:'',device:''};
 let cfg=Object.assign({},DEFAULT_CFG,LS.get('cfg',{}));
-let state=null; // loaded below, once everything it needs is defined
+let state={version:2,rooms:[],items:[],files:[],deleted:{}}; // real data loaded below, once everything it needs is defined
 let dirty=LS.get('dirty',false);
 let lastSync=LS.get('lastSync',null);
 let sync={busy:false,err:'',missing:false};
@@ -163,7 +186,7 @@ function normalise(d){
     d.rooms.forEach((r,i)=>{rooms.push({id:r.id,name:r.name,order:i,updatedAt:t});(r.items||[]).forEach(it=>items.push(Object.assign({},it,{room:r.id,updatedAt:t})));});
     d={version:2,rooms,items,deleted:{}};
   }
-  d.version=2;d.rooms=Array.isArray(d.rooms)?d.rooms:[];d.items=Array.isArray(d.items)?d.items:[];d.deleted=d.deleted&&typeof d.deleted==='object'?d.deleted:{};
+  d.version=2;d.rooms=Array.isArray(d.rooms)?d.rooms:[];d.items=Array.isArray(d.items)?d.items:[];d.files=Array.isArray(d.files)?d.files:[];d.files.forEach(f=>{if(!f.updatedAt)f.updatedAt=0;});d.deleted=d.deleted&&typeof d.deleted==='object'?d.deleted:{};
   d.items.forEach(it=>{KEYS.forEach(k=>{if(it[k]==null)it[k]='';});if(it.notes==null)it.notes='';if(!it.type)it.type='other';if(!it.updatedAt)it.updatedAt=0;});
   d.rooms.forEach((r,i)=>{if(r.order==null)r.order=i;if(!r.updatedAt)r.updatedAt=0;});
   return d;
@@ -175,16 +198,17 @@ function merge(a,b){
   const pick=(la,lb)=>{const m=new Map();la.concat(lb).forEach(x=>{const o=m.get(x.id);if(!o||(x.updatedAt||0)>(o.updatedAt||0))m.set(x.id,x);});return[...m.values()].filter(x=>!(del[x.id]&&del[x.id]>=(x.updatedAt||0)));};
   const rooms=pick(a.rooms,b.rooms).sort((x,y)=>(x.order-y.order)||String(x.name).localeCompare(y.name));
   const items=pick(a.items,b.items);
-  return{version:2,rooms,items,deleted:del};
+  const files=pick(a.files,b.files).sort((x,y)=>(x.addedAt||0)-(y.addedAt||0));
+  return{version:2,rooms,items,files,deleted:del};
 }
-function canon(d){const n=normalise(JSON.parse(JSON.stringify(d)));return JSON.stringify({rooms:n.rooms.slice().sort((x,y)=>x.id<y.id?-1:1),items:n.items.slice().sort((x,y)=>x.id<y.id?-1:1),deleted:Object.keys(n.deleted).sort().map(k=>[k,n.deleted[k]])});}
+function canon(d){const n=normalise(JSON.parse(JSON.stringify(d)));return JSON.stringify({rooms:n.rooms.slice().sort((x,y)=>x.id<y.id?-1:1),items:n.items.slice().sort((x,y)=>x.id<y.id?-1:1),files:n.files.slice().sort((x,y)=>x.id<y.id?-1:1),deleted:Object.keys(n.deleted).sort().map(k=>[k,n.deleted[k]])});}
 
 /* ---------- GitHub sync ---------- */
 function b64enc(str){const bytes=new TextEncoder().encode(str);let bin='';for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(bin);}
 function b64dec(b64){const bin=atob(String(b64).replace(/\s/g,''));const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes);}
 function gh(url,opts){
   opts=opts||{};
-  return fetch(url,{method:opts.method||'GET',cache:'no-store',headers:Object.assign({'Authorization':'Bearer '+cfg.token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},opts.body?{'Content-Type':'application/json'}:{}),body:opts.body?JSON.stringify(opts.body):undefined});
+  return fetch(url,{method:opts.method||'GET',cache:'no-store',headers:Object.assign({'Authorization':'Bearer '+cfg.token,'Accept':opts.accept||'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},opts.body?{'Content-Type':'application/json'}:{}),body:opts.body?JSON.stringify(opts.body):undefined});
 }
 const repoUrl=()=>'https://api.github.com/repos/'+encodeURIComponent(cfg.owner)+'/'+encodeURIComponent(cfg.repo);
 const fileUrl=()=>repoUrl()+'/contents/'+cfg.path.split('/').map(encodeURIComponent).join('/');
@@ -251,8 +275,11 @@ function view(it,showRoom){
   const rows=fl.filter(([k])=>!(OPTIONAL[k]&&!it[k])).map(([k,l])=>{const v=DATE_KEYS[k]?fmt(it[k]):it[k];return'<dt>'+l+'</dt><dd>'+(v?linkify(k,v):'<span class="empty">Not recorded</span>')+'</dd>';}).join('');
   const sub=(p?[it.provider,it.model]:[it.brand,it.model]).filter(Boolean).join(' · ');
   const rn=showRoom?(state.rooms.find(r=>r.id===it.room)||{}).name:'';
-  return'<article class="card"><div class="head">'+(ICONS[it.type]||ICONS.other)+'<div style="min-width:0"><h2>'+esc(it.name)+'</h2><div class="model">'+(sub?esc(sub):(p?'Provider not recorded':'Model not recorded'))+'</div>'+(rn?'<div class="where">'+esc(rn)+'</div>':'')+'</div><span class="badge '+cls+'">'+label+'</span></div><dl>'+rows+'</dl>'+(it.notes?'<p class="notes">'+esc(it.notes)+'</p>':'')+'<button class="edit" data-edit="'+esc(it.id)+'">Edit details</button></article>';
+  return'<article class="card"><div class="head">'+(ICONS[it.type]||ICONS.other)+'<div style="min-width:0"><h2>'+esc(it.name)+'</h2><div class="model">'+(sub?esc(sub):(p?'Provider not recorded':'Model not recorded'))+'</div>'+(rn?'<div class="where">'+esc(rn)+'</div>':'')+'</div><span class="badge '+cls+'">'+label+'</span></div><dl>'+rows+'</dl>'+(it.notes?'<p class="notes">'+esc(it.notes)+'</p>':'')+docsBlock(it)+'<button class="edit" data-edit="'+esc(it.id)+'">Edit details</button></article>';
 }
+const DOC_ICO={image:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>',pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>'};
+const docsOf=id=>state.files.filter(f=>f.item===id);
+function docsBlock(it){const ds=docsOf(it.id),busy=upload.item===it.id;return'<div class="docs"><span class="lbl">Documents'+(ds.length?' ('+ds.length+')':'')+'</span>'+(ds.length?'<div class="doclist">'+ds.map(f=>'<button class="doc" data-viewdoc="'+esc(f.id)+'">'+(DOC_ICO[f.kind]||DOC_ICO.pdf)+'<span>'+esc(f.name)+'</span></button>').join('')+'</div>':'')+(busy?'<span class="lbl">'+esc(upload.text)+'</span>':'<div class="docbtns"><button class="ghost small" data-camdoc="'+esc(it.id)+'">Take photo</button><button class="ghost small" data-adddoc="'+esc(it.id)+'">Add photo or PDF</button></div>')+'</div>';}
 function form(it){
   const d=ui.draft||it;
   const f=fieldsFor(d.type).map(([k,l])=>{
@@ -299,7 +326,7 @@ function results(){
   const q=ui.q.trim().toLowerCase();
   if(!q){el.innerHTML='';if(ob)ob.hidden=false;return;}
   if(ob)ob.hidden=true;
-  const hits=state.items.filter(i=>['name','notes'].concat(KEYS).some(k=>String(i[k]||'').toLowerCase().includes(q)));
+  const hits=state.items.filter(i=>['name','notes'].concat(KEYS).some(k=>String(i[k]||'').toLowerCase().includes(q))||docsOf(i.id).some(f=>String(f.name).toLowerCase().includes(q)));
   el.innerHTML=hits.length?'<div class="grid" style="margin-bottom:18px">'+hits.map(i=>i.id===ui.editing?form(i):view(i,true)).join('')+'</div>':'<p class="emptyroom">No matches.</p>';
 }
 function render(){
@@ -346,6 +373,115 @@ fileInput.addEventListener('change',async()=>{
   catch(e){msg='That file couldn’t be read as warranty data.';render();}
 });
 
+/* ---------- documents (photos + PDFs, stored in the private repo) ---------- */
+const MAX_PDF=15*1024*1024, TARGET=500*1024;
+let upload={item:null,text:''};
+const docCache=new Map();
+const camInput=document.getElementById('caminput'),docInput=document.getElementById('docinput'),viewer=document.getElementById('viewer');
+const pathUrl=path=>repoUrl()+'/contents/'+path.split('/').map(encodeURIComponent).join('/');
+function needOnline(what){if(!cfg.token){msg='Connect to your data repo first.';render();return false;}if(!navigator.onLine){msg=what+' needs an internet connection. Your text details still work offline.';render();return false;}return true;}
+function pickDocs(itemId,camera){if(!needOnline('Adding documents'))return;upload.pending=itemId;(camera?camInput:docInput).click();}
+[camInput,docInput].forEach(inp=>inp.addEventListener('change',()=>{const files=[...inp.files];inp.value='';const id=upload.pending;upload.pending=null;if(files.length&&id)uploadDocs(id,files,inp===camInput);}));
+function blobToB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(blob);});}
+async function shrink(file){
+  let src;
+  try{src=await createImageBitmap(file,{imageOrientation:'from-image'});}
+  catch(e){src=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('That picture format can’t be read. Try a JPEG or a screenshot.'));i.src=URL.createObjectURL(file);});}
+  const w0=src.width||src.naturalWidth,h0=src.height||src.naturalHeight;
+  let max=2000,q=0.8,blob=null;
+  for(let i=0;i<8;i++){
+    const sc=Math.min(1,max/Math.max(w0,h0)),w=Math.round(w0*sc),h=Math.round(h0*sc);
+    const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(src,0,0,w,h);
+    blob=await new Promise(r=>c.toBlob(r,'image/jpeg',q));
+    if(blob&&blob.size<=TARGET)break;
+    if(q>0.55)q-=0.1;else max=Math.round(max*0.8);
+  }
+  if(src.close)src.close();
+  return blob;
+}
+function niceName(file,camera,n){
+  if(camera)return'Photo '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+(n>1?' ('+n+')':'');
+  return String(file.name||'Document').replace(/\.[a-z0-9]{2,5}$/i,'').slice(0,60)||'Document';
+}
+async function uploadDocs(itemId,files,camera){
+  if(!needOnline('Adding documents'))return;
+  const it=state.items.find(i=>i.id===itemId);if(!it)return;
+  let done=0;const added=[];
+  try{
+    for(const file of files){
+      const isPdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'');
+      const isImg=!isPdf&&(/^image\//.test(file.type)||/\.(jpe?g|png|heic|heif|webp|gif)$/i.test(file.name||''));
+      if(!isPdf&&!isImg)throw new Error('“'+file.name+'” isn’t a photo or PDF.');
+      if(isPdf&&file.size>MAX_PDF)throw new Error('“'+file.name+'” is over 15 MB. Try a smaller PDF.');
+      upload={item:itemId,text:(isImg?'Shrinking and uploading ':'Uploading ')+(files.length>1?(done+1)+' of '+files.length:'')+'…'};render();
+      const blob=isImg?await shrink(file):file;
+      const id=uid('doc'),ext=isImg?'jpg':'pdf',path='files/'+itemId+'/'+id+'.'+ext;
+      const r=await gh(pathUrl(path),{method:'PUT',body:{message:'Add document to '+it.name+(cfg.device?' ('+cfg.device+')':''),content:await blobToB64(blob)}});
+      if(r.status===401)throw new Error('GitHub didn’t accept the access token.');
+      if(!r.ok)throw new Error('Couldn’t upload to GitHub ('+r.status+').');
+      const j=await r.json();
+      added.push({id,item:itemId,name:niceName(file,camera,files.length>1?done+1:0),kind:isImg?'image':'pdf',path,sha:j.content&&j.content.sha,size:blob.size,addedAt:now(),updatedAt:now(),by:cfg.device||''});
+      done++;
+    }
+  }catch(e){msg=(e&&e.message)||'Upload failed.';}
+  upload={item:null,text:''};
+  if(added.length)commit(s=>{s.files.push(...added);},added.length===1?'Document added.':added.length+' documents added.');
+  else render();
+}
+async function fetchDoc(f){
+  if(docCache.has(f.id))return docCache.get(f.id);
+  const r=await gh(pathUrl(f.path),{accept:'application/vnd.github.raw+json'});
+  if(r.status===404)throw new Error('This document isn’t in the repo any more.');
+  if(!r.ok)throw new Error('Couldn’t load it from GitHub ('+r.status+').');
+  const b=await r.blob();const url=URL.createObjectURL(new Blob([b],{type:f.kind==='image'?'image/jpeg':'application/pdf'}));
+  docCache.set(f.id,url);return url;
+}
+async function removeRemote(f){
+  if(!navigator.onLine||!cfg.token)return;
+  try{
+    let sha=f.sha;
+    if(!sha){const r=await gh(pathUrl(f.path));if(!r.ok)return;sha=(await r.json()).sha;}
+    await gh(pathUrl(f.path),{method:'DELETE',body:{message:'Remove document'+(cfg.device?' ('+cfg.device+')':''),sha}});
+  }catch(e){}
+}
+let vstate={id:null,confirm:false};
+function openViewer(id){vstate={id,confirm:false};drawViewer();}
+function closeViewer(){vstate={id:null,confirm:false};viewer.hidden=true;viewer.innerHTML='';document.body.style.overflow='';}
+function drawViewer(body){
+  const f=state.files.find(x=>x.id===vstate.id);if(!f){closeViewer();return;}
+  const it=state.items.find(i=>i.id===f.item)||{};
+  viewer.hidden=false;document.body.style.overflow='hidden';
+  viewer.innerHTML='<div class="vbar"><b>'+esc(f.name)+'</b><button class="ghost small" data-vclose>Close</button></div><div class="vbody" id="vbody">'+(body||'<p>Loading…</p>')+'</div>'+
+  '<form class="vfoot" data-vrename><label>Name<input name="name" value="'+esc(f.name)+'" maxlength="80"></label><button type="submit" class="ghost small">Rename</button>'+(vstate.confirm?'<button type="button" class="danger small" data-vdel>Confirm delete</button>':'<button type="button" class="ghost small" data-vask>Delete</button>')+'</form>'+
+  '<p style="margin:0 12px 10px;font-size:12px;color:#9aa8b8">'+esc(it.name||'')+(f.addedAt?' · added '+new Date(f.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'')+(f.by?' by '+esc(f.by):'')+'</p>';
+  if(!body)loadViewer(f);
+}
+async function loadViewer(f){
+  if(!navigator.onLine){drawViewer('<p>Documents need an internet connection to open. Your text details still work offline.</p>');return;}
+  try{
+    const url=await fetchDoc(f);if(vstate.id!==f.id)return;
+    if(f.kind==='image')drawViewer('<img src="'+url+'" alt="'+esc(f.name)+'">');
+    else drawViewer('<p>PDF ready.</p><p><a class="primary" style="display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600" href="'+url+'" download="'+esc(f.name)+'.pdf" target="_blank" rel="noopener">Open PDF</a></p>');
+  }catch(e){if(vstate.id===f.id)drawViewer('<p>'+esc((e&&e.message)||'Couldn’t open it.')+'</p>');}
+}
+viewer.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+  if('vclose' in d){closeViewer();return;}
+  if('vask' in d){vstate.confirm=true;const b=document.getElementById('vbody');drawViewer(b?b.innerHTML:'');return;}
+  if('vdel' in d){
+    if(!needOnline('Deleting documents')){closeViewer();return;}
+    const f=state.files.find(x=>x.id===vstate.id);closeViewer();if(!f)return;
+    removeRemote(f);commit(s=>{s.files=s.files.filter(x=>x.id!==f.id);s.deleted[f.id]=now();},'Document deleted.');
+  }
+});
+viewer.addEventListener('submit',e=>{
+  e.preventDefault();const v=readForm(e.target);const id=vstate.id;const name=(v.name||'').trim();if(!name)return;
+  const b=document.getElementById('vbody');const keep=b?b.innerHTML:'';
+  commit(s=>{const f=s.files.find(x=>x.id===id);if(f){f.name=name;f.updatedAt=now();}},'Document renamed.');
+  vstate={id,confirm:false};drawViewer(keep);
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!viewer.hidden)closeViewer();});
+
 /* ---------- events ---------- */
 function readForm(f){const fd=new FormData(f),o={};for(const[k,v]of fd.entries())o[k]=String(v).trim();return o;}
 root.addEventListener('click',e=>{
@@ -361,13 +497,16 @@ root.addEventListener('click',e=>{
   if('rename' in d){reset();ui.renaming=true;render();return;}
   if('cancel' in d){reset();ui.settings=false;render();return;}
   if(d.askdel){ui.confirmDel=d.askdel;render();return;}
-  if(d.delitem){const id=d.delitem;commit(s=>{s.items=s.items.filter(i=>i.id!==id);s.deleted[id]=now();},'Item removed.');return;}
-  if('delroom' in d){const rid=ui.room;commit(s=>{const t=now();s.items.filter(i=>i.room===rid).forEach(i=>{s.deleted[i.id]=t;});s.items=s.items.filter(i=>i.room!==rid);s.rooms=s.rooms.filter(r=>r.id!==rid);s.deleted[rid]=t;},'Tab deleted.');ui.room='__overview';render();return;}
+  if(d.delitem){const id=d.delitem;const gone=docsOf(id);commit(s=>{const t=now();s.items=s.items.filter(i=>i.id!==id);s.deleted[id]=t;s.files.filter(f=>f.item===id).forEach(f=>{s.deleted[f.id]=t;});s.files=s.files.filter(f=>f.item!==id);},'Item removed.');gone.forEach(removeRemote);return;}
+  if('delroom' in d){const rid=ui.room;const ids=new Set(itemsIn(rid).map(i=>i.id));const gone=state.files.filter(f=>ids.has(f.item));gone.forEach(removeRemote);commit(s=>{const t=now();s.files.filter(f=>ids.has(f.item)).forEach(f=>{s.deleted[f.id]=t;});s.files=s.files.filter(f=>!ids.has(f.item));s.items.filter(i=>i.room===rid).forEach(i=>{s.deleted[i.id]=t;});s.items=s.items.filter(i=>i.room!==rid);s.rooms=s.rooms.filter(r=>r.id!==rid);s.deleted[rid]=t;},'Tab deleted.');ui.room='__overview';render();return;}
+  if(d.camdoc){pickDocs(d.camdoc,true);return;}
+  if(d.adddoc){pickDocs(d.adddoc,false);return;}
+  if(d.viewdoc){openViewer(d.viewdoc);return;}
   if('syncnow' in d){doSync();return;}
   if('create' in d){doSync({create:true});return;}
   if('export' in d){exportData();return;}
   if('import' in d){fileInput.click();return;}
-  if('disconnect' in d){['cfg','data','dirty','lastSync','tab'].forEach(LS.del);cfg=Object.assign({},DEFAULT_CFG);state=normalise({});dirty=false;lastSync=null;sync={busy:false,err:'',missing:false};ui.settings=false;ui.confirmDel=null;ui.room='__overview';render();return;}
+  if('disconnect' in d){['cfg','data','dirty','lastSync','tab'].forEach(LS.del);docCache.forEach(u=>URL.revokeObjectURL(u));docCache.clear();cfg=Object.assign({},DEFAULT_CFG);state=normalise({});dirty=false;lastSync=null;sync={busy:false,err:'',missing:false};ui.settings=false;ui.confirmDel=null;ui.room='__overview';render();return;}
 });
 root.addEventListener('change',e=>{
   if(e.target.matches('[data-retype]')){const f=e.target.form,it=state.items.find(i=>i.id===f.dataset.form);ui.draft=Object.assign({},it,readForm(f));render();}
