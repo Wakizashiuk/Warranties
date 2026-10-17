@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b7a86">
+<meta name="robots" content="noindex, nofollow">
+<title>Home warranties</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#f8fafc;--card:#fff;--ink:#22303c;--sub:#5b6875;--line:#d7dee6;--acc:#0b7a86;--ok:#2f855a;--okbg:#e6f4ea;--warn:#b45309;--warnbg:#fdf0dc;--bad:#b42318;--badbg:#fde7e5;--nil:#6b7684;--nilbg:#eef1f4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161c;--card:#1b222b;--ink:#e8edf3;--sub:#9aa8b8;--line:#2e3945;--acc:#4fc3cf;--ok:#6fcf97;--okbg:#17301f;--warn:#f0b35a;--warnbg:#33260f;--bad:#ff8a80;--badbg:#3a1a18;--nil:#9aa4b0;--nilbg:#232b35}}
+:root[data-theme="dark"]{--bg:#12161c;--card:#1b222b;--ink:#e8edf3;--sub:#9aa8b8;--line:#2e3945;--acc:#4fc3cf;--ok:#6fcf97;--okbg:#17301f;--warn:#f0b35a;--warnbg:#33260f;--bad:#ff8a80;--badbg:#3a1a18;--nil:#9aa4b0;--nilbg:#232b35}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Helvetica,Arial,sans-serif}
+body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1{font-size:26px;margin:4px 0;font-weight:800}
+.top .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pill{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.lede{color:var(--sub);font-size:14px;margin:4px 0 18px;line-height:1.5;max-width:70ch}
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.chip{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.head{display:flex;align-items:center;gap:12px}
+.ico{width:44px;height:44px;flex:none;color:var(--ink)}
+.head h2{font-size:17px;margin:0;font-weight:700}
+.head .model{font-size:13px;color:var(--sub);margin-top:2px}
+.badge{margin-left:auto;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.ok{color:var(--ok);background:var(--okbg)}.warn{color:var(--warn);background:var(--warnbg)}.bad{color:var(--bad);background:var(--badbg)}.nil{color:var(--nil);background:var(--nilbg)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:0;font-size:13.5px}
+dt{color:var(--sub)}dd{margin:0;overflow-wrap:anywhere}
+dd a{color:var(--acc)}
+.empty{color:var(--nil);font-style:italic}
+.notes{font-size:13.5px;line-height:1.45;background:var(--bg);border-radius:8px;padding:8px 10px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+button{font:inherit;font-size:14px;font-weight:600;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--acc)}
+button:disabled{opacity:.6;cursor:default}
+.edit{align-self:flex-start;background:transparent;color:var(--acc);margin-top:auto}
+.primary{background:var(--acc);color:#fff}
+:root[data-theme="dark"] .primary{color:#06252a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .primary{color:#06252a}}
+.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+form.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+label{display:flex;flex-direction:column;font-size:12.5px;color:var(--sub);gap:3px;min-width:0}
+label.full{grid-column:1/-1}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 8px;width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+.actions{grid-column:1/-1;display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.status{font-size:13px;color:var(--sub);min-height:18px;margin-top:14px}
+.foot{font-size:12.5px;color:var(--sub);margin-top:22px;line-height:1.5}
+@media (max-width:420px){form.fields{grid-template-columns:1fr}}
+.tabs{display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line);margin:0 0 16px;scrollbar-width:none}
+.tab{background:transparent;border:0;border-bottom:3px solid transparent;border-radius:0;color:var(--sub);padding:10px 12px;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--acc)}
+.tab .dot{width:8px;height:8px;border-radius:50%}
+.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.tab.add{color:var(--acc)}
+.roombar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px}
+.roombar .summary{margin:0}
+.roombar .tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.small{font-size:13px;padding:6px 11px}
+.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+.addcard{border:1.5px dashed var(--line);background:transparent;color:var(--acc);border-radius:14px;min-height:120px;font-size:15px}
+.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:16px}
+.inline label{min-width:200px;flex:1}
+.formfoot{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:4px}
+.emptyroom{color:var(--sub);font-size:14px;margin:6px 0 16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px}
+.panel h2{font-size:17px;margin:0 0 6px}
+.panel p{font-size:13.5px;color:var(--sub);line-height:1.5;margin:0 0 12px}
+.panel ol{font-size:13.5px;color:var(--sub);line-height:1.6;margin:0 0 12px;padding-left:20px}
+.banner{border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.45;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .grow{flex:1;min-width:200px}
+.list{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;text-align:left;color:var(--ink);font-weight:400}
+.row .ico{width:30px;height:30px}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-size:14.5px}
+.row .t span{font-size:12.5px;color:var(--sub)}
+h3{font-size:15px;margin:0 0 10px}
+.search{margin-bottom:14px}
+.where{font-size:12px;color:var(--sub)}
+</style>
+</head>
+<body>
+<main id="root"></main>
+<input type="file" id="importfile" accept="application/json,.json" hidden>
+<script>
+(function(){
+'use strict';
+/* ---------- storage ---------- */
+const LS={
+  get(k,d){try{const v=localStorage.getItem('hw.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem('hw.'+k,JSON.stringify(v));}catch(e){}},
+  del(k){try{localStorage.removeItem('hw.'+k);}catch(e){}}
+};
+const DEFAULT_CFG={owner:'Wakizashiuk',repo:'home-warranties-data',path:'warranties.json',token:'',device:''};
+let cfg=Object.assign({},DEFAULT_CFG,LS.get('cfg',{}));
+let state=normalise(LS.get('data',null)||{version:2,rooms:[],items:[],deleted:{}});
+let dirty=LS.get('dirty',false);
+let lastSync=LS.get('lastSync',null);
+let sync={busy:false,err:'',missing:false};
+let msg='';
+let ui={room:LS.get('tab','__overview'),editing:null,draft:null,adding:false,addingRoom:false,renaming:false,confirmDel:null,settings:false,q:''};
+const root=document.getElementById('root');
+
+/* ---------- helpers ---------- */
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const now=()=>Date.now();
+const uid=s=>(String(s||'x').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'x')+'-'+Math.random().toString(36).slice(2,7);
+function fmt(d){if(!d)return'';const x=new Date(d+'T00:00:00');return isNaN(x)?d:x.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function ago(t){if(!t)return'never';const s=Math.round((now()-t)/1000);if(s<60)return'just now';const m=Math.round(s/60);if(m<60)return m+' min ago';const h=Math.round(m/60);if(h<24)return h+' hr ago';return new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+
+/* ---------- icons ---------- */
+const S='<svg viewBox="0 0 48 48" class="ico" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+const ICONS={
+oven:S+'<rect x="6" y="4" width="36" height="40" rx="4"/><path d="M6 14h36"/><circle cx="14" cy="9" r="1.8"/><circle cx="22" cy="9" r="1.8"/><circle cx="30" cy="9" r="1.8"/><rect x="12" y="20" width="24" height="17" rx="2"/></svg>',
+freezer:S+'<rect x="10" y="4" width="28" height="40" rx="4"/><path d="M14 14h20M14 24h20M14 34h20"/><path d="M24 7v4M22 9h4"/></svg>',
+fridgefreezer:S+'<rect x="10" y="3" width="28" height="42" rx="4"/><path d="M10 22h28"/><path d="M15 10v6M15 27v10"/></svg>',
+washer:S+'<rect x="6" y="4" width="36" height="40" rx="4"/><path d="M6 12h36"/><circle cx="24" cy="28" r="10"/><path d="M18 30c3-3 9 3 12 0"/><circle cx="12" cy="8" r="1.5"/></svg>',
+dishwasher:S+'<rect x="6" y="4" width="36" height="40" rx="4"/><path d="M6 12h36"/><path d="M16 8h16"/><path d="M14 24h20M14 32h20" stroke-dasharray="3 3"/></svg>',
+dryer:S+'<rect x="6" y="4" width="36" height="40" rx="4"/><path d="M6 12h36"/><circle cx="24" cy="28" r="10"/><path d="M20 24c2 2 0 4 2 6M26 24c2 2 0 4 2 6"/><circle cx="12" cy="8" r="1.5"/></svg>',
+tv:S+'<rect x="4" y="8" width="40" height="26" rx="3"/><path d="M18 42l6-8 6 8"/></svg>',
+computer:S+'<rect x="6" y="8" width="36" height="24" rx="2"/><path d="M4 38h40"/></svg>',
+phone:S+'<rect x="14" y="4" width="20" height="40" rx="4"/><path d="M21 38h6"/></svg>',
+vacuum:S+'<path d="M27 4h8v5h-8z"/><path d="M31 9v21"/><rect x="10" y="30" width="28" height="9" rx="3"/><circle cx="15" cy="42" r="2"/><circle cx="33" cy="42" r="2"/></svg>',
+smallappliance:S+'<path d="M18 4v9M30 4v9"/><path d="M12 13h24v8a12 12 0 0 1-24 0z"/><path d="M24 33v11"/></svg>',
+boiler:S+'<rect x="10" y="4" width="28" height="36" rx="4"/><circle cx="24" cy="18" r="6"/><path d="M18 40v4M30 40v4"/></svg>',
+car:S+'<path d="M5 31v-7l5-10h28l5 10v7z"/><path d="M8 31v6h6v-6M34 31v6h6v-6"/><path d="M10 24h28"/><circle cx="13" cy="27.5" r="1.5"/><circle cx="35" cy="27.5" r="1.5"/></svg>',
+insurance:S+'<path d="M24 4l16 6v12c0 10-7 18-16 22C15 40 8 32 8 22V10z"/><path d="M17 24l5 5 9-10"/></svg>',
+other:S+'<rect x="8" y="8" width="32" height="32" rx="6"/><path d="M18 24h12M24 18v12"/></svg>'};
+const TYPES=[['oven','Oven or cooker'],['freezer','Freezer'],['fridgefreezer','Fridge or fridge freezer'],['washer','Washing machine'],['dishwasher','Dishwasher'],['dryer','Tumble dryer'],['tv','TV'],['computer','Computer or laptop'],['phone','Phone or tablet'],['vacuum','Vacuum or floor care'],['smallappliance','Small appliance'],['boiler','Boiler or heating'],['car','Car (insurance, breakdown, MOT)'],['insurance','Insurance policy (home, pet, travel)'],['other','Other']];
+const isPolicy=t=>t==='car'||t==='insurance';
+
+/* ---------- fields ---------- */
+const KEYS=['brand','model','serial','purchased','retailer','cover','provider','policy','expires','cost','contact','docs'];
+const DATE_KEYS={purchased:1,expires:1};
+const WARRANTY_LAB={brand:'Brand',model:'Model',serial:'Serial number',purchased:'Purchased',retailer:'Bought from',cover:'Cover type',provider:'Warranty provider',policy:'Policy / plan ref',expires:'Cover ends',cost:'Price paid',contact:'How to claim',docs:'Receipt / documents link'};
+const POLICY_LAB={provider:'Insurer / provider',policy:'Policy number',model:'Plan or level',serial:'What it covers',cover:'Cover type',purchased:'Start date',expires:'Renews on',cost:'Premium',retailer:'Bought via',contact:'How to claim',docs:'Documents link'};
+const POLICY_ORDER=['provider','policy','model','serial','cover','purchased','expires','cost','retailer','contact','docs'];
+function fieldsFor(type){
+  if(isPolicy(type)){const lab=Object.assign({},POLICY_LAB);if(type==='car'){lab.serial='Registration';lab.model='Vehicle';}return POLICY_ORDER.map(k=>[k,lab[k]]);}
+  return KEYS.map(k=>[k,WARRANTY_LAB[k]]);
+}
+const COVERS=['','Manufacturer guarantee','Extended plan','Retailer warranty','Insurance policy','Breakdown cover','MOT / service','None'];
+const OPTIONAL={cost:1,docs:1};
+
+/* ---------- data model + merge ---------- */
+function normalise(d){
+  if(!d||typeof d!=='object')d={};
+  if(Array.isArray(d.rooms)&&d.rooms.some(r=>Array.isArray(r.items))&&!Array.isArray(d.items)){ // v1 (nested)
+    const t=now(),rooms=[],items=[];
+    d.rooms.forEach((r,i)=>{rooms.push({id:r.id,name:r.name,order:i,updatedAt:t});(r.items||[]).forEach(it=>items.push(Object.assign({},it,{room:r.id,updatedAt:t})));});
+    d={version:2,rooms,items,deleted:{}};
+  }
+  d.version=2;d.rooms=Array.isArray(d.rooms)?d.rooms:[];d.items=Array.isArray(d.items)?d.items:[];d.deleted=d.deleted&&typeof d.deleted==='object'?d.deleted:{};
+  d.items.forEach(it=>{KEYS.forEach(k=>{if(it[k]==null)it[k]='';});if(it.notes==null)it.notes='';if(!it.type)it.type='other';if(!it.updatedAt)it.updatedAt=0;});
+  d.rooms.forEach((r,i)=>{if(r.order==null)r.order=i;if(!r.updatedAt)r.updatedAt=0;});
+  return d;
+}
+function merge(a,b){
+  a=normalise(JSON.parse(JSON.stringify(a)));b=normalise(JSON.parse(JSON.stringify(b)));
+  const del=Object.assign({},a.deleted);
+  Object.keys(b.deleted).forEach(k=>{del[k]=Math.max(del[k]||0,b.deleted[k]);});
+  const pick=(la,lb)=>{const m=new Map();la.concat(lb).forEach(x=>{const o=m.get(x.id);if(!o||(x.updatedAt||0)>(o.updatedAt||0))m.set(x.id,x);});return[...m.values()].filter(x=>!(del[x.id]&&del[x.id]>=(x.updatedAt||0)));};
+  const rooms=pick(a.rooms,b.rooms).sort((x,y)=>(x.order-y.order)||String(x.name).localeCompare(y.name));
+  const items=pick(a.items,b.items);
+  return{version:2,rooms,items,deleted:del};
+}
+function canon(d){const n=normalise(JSON.parse(JSON.stringify(d)));return JSON.stringify({rooms:n.rooms.slice().sort((x,y)=>x.id<y.id?-1:1),items:n.items.slice().sort((x,y)=>x.id<y.id?-1:1),deleted:Object.keys(n.deleted).sort().map(k=>[k,n.deleted[k]])});}
+
+/* ---------- GitHub sync ---------- */
+function b64enc(str){const bytes=new TextEncoder().encode(str);let bin='';for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(bin);}
+function b64dec(b64){const bin=atob(String(b64).replace(/\s/g,''));const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes);}
+function gh(url,opts){
+  opts=opts||{};
+  return fetch(url,{method:opts.method||'GET',cache:'no-store',headers:Object.assign({'Authorization':'Bearer '+cfg.token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},opts.body?{'Content-Type':'application/json'}:{}),body:opts.body?JSON.stringify(opts.body):undefined});
+}
+const repoUrl=()=>'https://api.github.com/repos/'+encodeURIComponent(cfg.owner)+'/'+encodeURIComponent(cfg.repo);
+const fileUrl=()=>repoUrl()+'/contents/'+cfg.path.split('/').map(encodeURIComponent).join('/');
+function persist(){LS.set('data',state);LS.set('dirty',dirty);}
+async function doSync(opts){
+  opts=opts||{};
+  if(!cfg.token||sync.busy)return;
+  if(!navigator.onLine){sync.err='';renderBg();return;}
+  sync.busy=true;sync.err='';renderBg();
+  try{
+    for(let attempt=0;attempt<3;attempt++){
+      const r=await gh(fileUrl());
+      let remote=null,sha=null;
+      if(r.status===404){
+        const rr=await gh(repoUrl());
+        if(rr.status===404||rr.status===403)throw new Error('Can’t see the repo '+cfg.owner+'/'+cfg.repo+'. Check the name, and that the token has access to it.');
+        if(!opts.create){sync.missing=true;break;}
+      }else if(r.status===401){throw new Error('GitHub didn’t accept the access token. It may have expired; add a new one in Settings.');}
+      else if(!r.ok){throw new Error('GitHub error '+r.status+'. Try again shortly.');}
+      else{const j=await r.json();sha=j.sha;remote=normalise(JSON.parse(b64dec(j.content||'')||'{}'));}
+      sync.missing=false;
+      const merged=remote?merge(state,remote):normalise(state);
+      state=merged;persist();
+      if(!remote||canon(merged)!==canon(remote)){
+        const body={message:'Update warranties'+(cfg.device?' ('+cfg.device+')':''),content:b64enc(JSON.stringify(Object.assign({updated:new Date().toISOString()},merged),null,1))};
+        if(sha)body.sha=sha;
+        const p=await gh(fileUrl(),{method:'PUT',body});
+        if(p.status===409||p.status===422){continue;}
+        if(p.status===403||p.status===404)throw new Error('The token can read but not save. Give it “Contents: Read and write” access.');
+        if(!p.ok)throw new Error('Couldn’t save to GitHub ('+p.status+').');
+      }
+      dirty=false;lastSync=now();LS.set('lastSync',lastSync);persist();
+      break;
+    }
+  }catch(e){sync.err=(e&&e.message)||'Sync failed.';if(String(sync.err).includes('Failed to fetch'))sync.err='Couldn’t reach GitHub. Changes are kept on this device.';}
+  sync.busy=false;renderBg();
+}
+let syncTimer=null;
+function queueSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>doSync(),400);}
+
+/* ---------- mutations ---------- */
+function commit(fn,toast){fn(state);dirty=true;persist();msg=toast||'';ui.editing=ui.draft=ui.confirmDel=null;ui.adding=ui.addingRoom=ui.renaming=false;render();queueSync();}
+const rooms=()=>state.rooms.slice().sort((a,b)=>a.order-b.order);
+const room=()=>state.rooms.find(r=>r.id===ui.room);
+const itemsIn=id=>state.items.filter(i=>i.room===id);
+
+/* ---------- status ---------- */
+function daysLeft(it){if(!it.expires)return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(it.expires+'T00:00:00')-t)/864e5);}
+function status(it){
+  const d=daysLeft(it),p=isPolicy(it.type);
+  if(d==null||isNaN(d))return['nil',p?'No renewal date':'No end date'];
+  if(d<0)return['bad',p?'Lapsed':'Expired'];
+  if(d<=60)return['warn',(p?'Renews in ':'')+d+(d===1?' day':' days')+(p?'':' left')];
+  return['ok',p?'Active':'Covered'];
+}
+function worst(list){let w='';list.forEach(i=>{const c=status(i)[0];if(c==='bad')w='bad';else if(c==='warn'&&w!=='bad')w='warn';});return w;}
+function chips(list){const c={ok:0,warn:0,bad:0,nil:0};list.forEach(i=>c[status(i)[0]]++);return[['ok','covered'],['warn','ending soon'],['bad','expired'],['nil','with no end date']].filter(([k])=>c[k]).map(([k,l])=>'<span class="chip '+k+'">'+c[k]+' '+l+'</span>').join('');}
+
+/* ---------- views ---------- */
+function linkify(k,v){if(k==='docs'&&/^https?:\/\//i.test(v))return'<a href="'+esc(v)+'" target="_blank" rel="noopener">Open link</a>';return esc(v);}
+function view(it,showRoom){
+  const[cls,label]=status(it),p=isPolicy(it.type);
+  const fl=fieldsFor(it.type).filter(([k])=>p?(k!=='provider'&&k!=='model'):(k!=='brand'&&k!=='model'));
+  const rows=fl.filter(([k])=>!(OPTIONAL[k]&&!it[k])).map(([k,l])=>{const v=DATE_KEYS[k]?fmt(it[k]):it[k];return'<dt>'+l+'</dt><dd>'+(v?linkify(k,v):'<span class="empty">Not recorded</span>')+'</dd>';}).join('');
+  const sub=(p?[it.provider,it.model]:[it.brand,it.model]).filter(Boolean).join(' · ');
+  const rn=showRoom?(state.rooms.find(r=>r.id===it.room)||{}).name:'';
+  return'<article class="card"><div class="head">'+(ICONS[it.type]||ICONS.other)+'<div style="min-width:0"><h2>'+esc(it.name)+'</h2><div class="model">'+(sub?esc(sub):(p?'Provider not recorded':'Model not recorded'))+'</div>'+(rn?'<div class="where">'+esc(rn)+'</div>':'')+'</div><span class="badge '+cls+'">'+label+'</span></div><dl>'+rows+'</dl>'+(it.notes?'<p class="notes">'+esc(it.notes)+'</p>':'')+'<button class="edit" data-edit="'+esc(it.id)+'">Edit details</button></article>';
+}
+function form(it){
+  const d=ui.draft||it;
+  const f=fieldsFor(d.type).map(([k,l])=>{
+    if(k==='cover'){const opts=COVERS.includes(d[k])?COVERS:COVERS.concat([d[k]]);return'<label>'+l+'<select name="cover">'+opts.map(c=>'<option'+(c===d[k]?' selected':'')+' value="'+esc(c)+'">'+(c?esc(c):'Choose...')+'</option>').join('')+'</select></label>';}
+    const t=DATE_KEYS[k]?'date':(k==='docs'?'url':'text');
+    return'<label'+(k==='contact'||k==='docs'?' class="full"':'')+'>'+l+'<input name="'+k+'" type="'+t+'" value="'+esc(d[k])+'"'+(k==='docs'?' placeholder="https://drive.google.com/..."':'')+'></label>';
+  }).join('');
+  const del=ui.confirmDel===it.id?'<button type="button" class="danger small" data-delitem="'+esc(it.id)+'">Confirm remove</button>':'<button type="button" class="ghost small" data-askdel="'+esc(it.id)+'">Remove item</button>';
+  return'<article class="card"><div class="head">'+(ICONS[d.type]||ICONS.other)+'<div><h2>'+esc(d.name)+'</h2><div class="model">Editing</div></div></div><form class="fields" data-form="'+esc(it.id)+'"><label>Name<input name="name" required value="'+esc(d.name)+'"></label><label>Type<select name="type" data-retype>'+TYPES.map(([v,l])=>'<option value="'+v+'"'+(v===d.type?' selected':'')+'>'+l+'</option>').join('')+'</select></label><label class="full">Tab<select name="room">'+rooms().map(r=>'<option value="'+esc(r.id)+'"'+(r.id===d.room?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select></label>'+f+'<label class="full">Notes<textarea name="notes">'+esc(d.notes)+'</textarea></label><div class="formfoot"><div class="actions" style="margin:0"><button type="submit" class="primary">Save</button><button type="button" class="ghost" data-cancel>Cancel</button></div>'+del+'</div></form></article>';
+}
+function addForm(){
+  return'<article class="card"><form class="fields" data-additem><label class="full">Name<input name="name" required placeholder="e.g. Microwave or Car insurance"></label><label class="full">Type<select name="type">'+TYPES.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')+'</select></label><div class="actions"><button type="submit" class="primary">Add item</button><button type="button" class="ghost" data-cancel>Cancel</button></div></form></article>';
+}
+function syncPill(){
+  if(!cfg.token)return'<span class="pill nil">Not connected</span>';
+  if(sync.busy)return'<span class="pill nil">Syncing…</span>';
+  if(sync.err)return'<span class="pill bad">Not synced</span>';
+  if(!navigator.onLine)return'<span class="pill warn">Offline'+(dirty?' · changes saved here':'')+'</span>';
+  if(dirty)return'<span class="pill warn">Waiting to sync</span>';
+  return'<span class="pill ok">Synced '+ago(lastSync)+'</span>';
+}
+function setupPanel(first){
+  return'<section class="panel"><h2>'+(first?'Connect to your private data':'Settings')+'</h2>'+
+  (first?'<p>Your warranty list lives in a private GitHub repo, so the app code can be public without anyone seeing your data. Each phone needs an access token once.</p><ol><li>On GitHub, go to Settings → Developer settings → Fine-grained tokens → Generate new token.</li><li>Repository access: Only select repositories → <b>'+esc(cfg.repo)+'</b>.</li><li>Permissions: Contents → Read and write.</li><li>Copy the token and paste it below.</li></ol>':'<p>Connected to <b>'+esc(cfg.owner+'/'+cfg.repo)+'</b>. Last synced '+esc(ago(lastSync))+'.</p>')+
+  '<form class="fields" data-setup><label>GitHub username<input name="owner" required value="'+esc(cfg.owner)+'" autocapitalize="off" autocomplete="off"></label><label>Private data repo<input name="repo" required value="'+esc(cfg.repo)+'" autocapitalize="off" autocomplete="off"></label><label class="full">Access token<input name="token" type="password" '+(first?'required ':'')+'placeholder="'+(first?'github_pat_...':'Leave blank to keep the current token')+'" autocomplete="off"></label><label class="full">This device’s name (shown in the change history)<input name="device" value="'+esc(cfg.device)+'" placeholder="e.g. Dave’s phone"></label><div class="actions"><button type="submit" class="primary">'+(first?'Connect':'Save settings')+'</button>'+(first?'':'<button type="button" class="ghost" data-cancel>Close</button>')+'</div></form>'+
+  (first?'':'<div class="actions" style="margin-top:14px"><button class="ghost small" data-syncnow>Sync now</button><button class="ghost small" data-export>Download a backup</button><button class="ghost small" data-import>Import a file</button>'+(ui.confirmDel==='disconnect'?'<button class="danger small" data-disconnect>Confirm: remove token and data from this device</button>':'<button class="ghost small" data-askdel="disconnect">Disconnect this device</button>')+'</div>')+
+  '</section>';
+}
+function overview(){
+  const all=state.items;
+  let h='<div class="summary">'+chips(all)+'</div>';
+  h+='<label class="search">Search everything<input type="search" data-search value="'+esc(ui.q)+'" placeholder="Name, brand, provider, serial, notes..."></label><div id="results"></div>';
+  const soon=all.filter(i=>{const d=daysLeft(i);return d!=null&&!isNaN(d)&&d>=-30&&d<=90;}).sort((a,b)=>a.expires<b.expires?-1:1);
+  h+='<div id="ovbody"><h3>Coming up (next 90 days)</h3>';
+  if(!soon.length)h+='<p class="emptyroom">Nothing renewing or ending in the next 90 days.</p>';
+  else h+='<div class="list">'+soon.map(i=>{const[c,l]=status(i);const rn=(state.rooms.find(r=>r.id===i.room)||{}).name||'';return'<button class="row" data-goto="'+esc(i.room)+'">'+(ICONS[i.type]||ICONS.other)+'<span class="t"><b>'+esc(i.name)+'</b><span>'+esc(rn)+' · '+(isPolicy(i.type)?'renews ':'ends ')+fmt(i.expires)+'</span></span><span class="badge '+c+'">'+l+'</span></button>';}).join('')+'</div>';
+  const blank=all.filter(i=>!i.expires).length;
+  if(blank)h+='<p class="emptyroom">'+blank+' item'+(blank===1?' has':'s have')+' no end date yet. Add one so you get a heads-up before cover runs out.</p>';
+  h+='</div>';
+  return h;
+}
+function results(){
+  const el=document.getElementById('results'),ob=document.getElementById('ovbody');if(!el)return;
+  const q=ui.q.trim().toLowerCase();
+  if(!q){el.innerHTML='';if(ob)ob.hidden=false;return;}
+  if(ob)ob.hidden=true;
+  const hits=state.items.filter(i=>['name','notes'].concat(KEYS).some(k=>String(i[k]||'').toLowerCase().includes(q)));
+  el.innerHTML=hits.length?'<div class="grid" style="margin-bottom:18px">'+hits.map(i=>i.id===ui.editing?form(i):view(i,true)).join('')+'</div>':'<p class="emptyroom">No matches.</p>';
+}
+function render(){
+  const ae=document.activeElement,keepSearch=ae&&ae.matches&&ae.matches('[data-search]'),caret=keepSearch?ae.selectionStart:0;
+  let h='<div class="top"><h1>Home warranties</h1><div class="right"><span id="pill">'+syncPill()+'</span>'+(cfg.token?'<button class="ghost small" data-settings aria-label="Settings">Settings</button>':'')+'</div></div>';
+  h+='<p class="lede">Guarantees, cover and renewals around the house and car, one tab per room. Keep receipts and plan documents to hand when you claim.</p>';
+  if(!cfg.token){h+=setupPanel(true);root.innerHTML=h+foot();return;}
+  if(ui.settings)h+=setupPanel(false);
+  if(sync.err)h+='<div class="banner bad"><span class="grow">'+esc(sync.err)+'</span><button class="ghost small" data-syncnow>Try again</button></div>';
+  if(sync.missing)h+='<div class="banner warn"><span class="grow">There’s no <b>'+esc(cfg.path)+'</b> in '+esc(cfg.owner+'/'+cfg.repo)+' yet. Upload your data file there, import it here, or start fresh.</span><button class="ghost small" data-import>Import a file</button><button class="primary small" data-create>Start fresh</button></div>';
+  const rs=rooms();
+  if(ui.room!=='__overview'&&!rs.some(r=>r.id===ui.room))ui.room='__overview';
+  h+='<div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="'+(ui.room==='__overview')+'" data-tab="__overview">Overview</button>'+rs.map(x=>{const w=worst(itemsIn(x.id));return'<button class="tab" role="tab" aria-selected="'+(x.id===ui.room)+'" data-tab="'+esc(x.id)+'">'+esc(x.name)+(w?'<span class="dot '+w+'" title="'+(w==='bad'?'Something has expired':'Cover ending soon')+'"></span>':'')+'</button>';}).join('')+'<button class="tab add" data-addroom>Add tab</button></div>';
+  if(ui.addingRoom)h+='<form class="inline" data-roomform><label>New tab name<input name="name" required placeholder="e.g. Living room or Cars"></label><button type="submit" class="primary">Add tab</button><button type="button" class="ghost" data-cancel>Cancel</button></form>';
+  if(ui.room==='__overview'){h+=overview();}
+  else{
+    const r=room(),list=itemsIn(r.id);
+    let tools='';
+    if(ui.renaming)tools='<form class="inline" style="margin:0" data-renameform><label style="min-width:160px">Tab name<input name="name" required value="'+esc(r.name)+'"></label><button type="submit" class="primary small">Rename</button><button type="button" class="ghost small" data-cancel>Cancel</button></form>';
+    else tools='<button class="ghost small" data-rename>Rename tab</button>'+(ui.confirmDel==='room:'+r.id?'<button class="danger small" data-delroom>Confirm delete'+(list.length?' with '+list.length+' items':'')+'</button>':'<button class="ghost small" data-askdel="room:'+esc(r.id)+'">Delete tab</button>');
+    h+='<div class="roombar"><div class="summary">'+chips(list)+'</div><div class="tools">'+tools+'</div></div>';
+    if(!list.length&&!ui.adding)h+='<p class="emptyroom">Nothing in this tab yet.</p>';
+    h+='<div class="grid">'+list.map(i=>i.id===ui.editing?form(i):view(i)).join('')+(ui.adding?addForm():'<button class="addcard" data-additembtn>Add item</button>')+'</div>';
+  }
+  h+='<div class="status" role="status">'+esc(msg)+'</div>'+foot();
+  root.innerHTML=h;
+  if(ui.room==='__overview')results();
+  if(keepSearch){const s=root.querySelector('[data-search]');if(s){s.focus();try{s.setSelectionRange(caret,caret);}catch(e){}}}
+}
+function busyEditing(){return!!(ui.editing||ui.adding||ui.addingRoom||ui.renaming||ui.settings);}
+function renderBg(){if(busyEditing()||!cfg.token&&root.querySelector('[data-setup]')){const p=document.getElementById('pill');if(p)p.innerHTML=syncPill();}else render();}
+function foot(){return'<p class="foot">Saved on this device and synced to your private GitHub repo. Don’t store card or bank details here; a policy reference and the provider’s claim route are enough.</p>';}
+
+/* ---------- import / export ---------- */
+function exportData(){
+  const blob=new Blob([JSON.stringify(Object.assign({updated:new Date().toISOString()},state),null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='warranties-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+const fileInput=document.getElementById('importfile');
+fileInput.addEventListener('change',async()=>{
+  const f=fileInput.files[0];fileInput.value='';if(!f)return;
+  try{const d=normalise(JSON.parse(await f.text()));const t=now();d.items.forEach(i=>{if(!i.updatedAt)i.updatedAt=t;});d.rooms.forEach(r=>{if(!r.updatedAt)r.updatedAt=t;});
+    state=merge(state,d);dirty=true;persist();msg='Imported '+d.items.length+' items.';ui.settings=false;render();doSync({create:true});}
+  catch(e){msg='That file couldn’t be read as warranty data.';render();}
+});
+
+/* ---------- events ---------- */
+function readForm(f){const fd=new FormData(f),o={};for(const[k,v]of fd.entries())o[k]=String(v).trim();return o;}
+root.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t||t.getAttribute('type')==='submit')return;
+  const d=t.dataset;
+  const reset=()=>{ui.editing=ui.draft=ui.confirmDel=null;ui.adding=ui.addingRoom=ui.renaming=false;msg='';};
+  if(d.tab){reset();ui.room=d.tab;LS.set('tab',d.tab);render();window.scrollTo(0,0);return;}
+  if(d.goto){reset();ui.room=d.goto;LS.set('tab',d.goto);render();window.scrollTo(0,0);return;}
+  if('settings' in d){reset();ui.settings=!ui.settings;render();return;}
+  if('addroom' in d){reset();ui.addingRoom=true;render();root.querySelector('[data-roomform] input').focus();return;}
+  if(d.edit){reset();ui.editing=d.edit;render();return;}
+  if('additembtn' in d){reset();ui.adding=true;render();root.querySelector('[data-additem] input').focus();return;}
+  if('rename' in d){reset();ui.renaming=true;render();return;}
+  if('cancel' in d){reset();ui.settings=false;render();return;}
+  if(d.askdel){ui.confirmDel=d.askdel;render();return;}
+  if(d.delitem){const id=d.delitem;commit(s=>{s.items=s.items.filter(i=>i.id!==id);s.deleted[id]=now();},'Item removed.');return;}
+  if('delroom' in d){const rid=ui.room;commit(s=>{const t=now();s.items.filter(i=>i.room===rid).forEach(i=>{s.deleted[i.id]=t;});s.items=s.items.filter(i=>i.room!==rid);s.rooms=s.rooms.filter(r=>r.id!==rid);s.deleted[rid]=t;},'Tab deleted.');ui.room='__overview';render();return;}
+  if('syncnow' in d){doSync();return;}
+  if('create' in d){doSync({create:true});return;}
+  if('export' in d){exportData();return;}
+  if('import' in d){fileInput.click();return;}
+  if('disconnect' in d){['cfg','data','dirty','lastSync','tab'].forEach(LS.del);cfg=Object.assign({},DEFAULT_CFG);state=normalise({});dirty=false;lastSync=null;sync={busy:false,err:'',missing:false};ui.settings=false;ui.confirmDel=null;ui.room='__overview';render();return;}
+});
+root.addEventListener('change',e=>{
+  if(e.target.matches('[data-retype]')){const f=e.target.form,it=state.items.find(i=>i.id===f.dataset.form);ui.draft=Object.assign({},it,readForm(f));render();}
+});
+root.addEventListener('input',e=>{if(e.target.matches('[data-search]')){ui.q=e.target.value;results();}});
+root.addEventListener('submit',e=>{
+  e.preventDefault();
+  const f=e.target,v=readForm(f);
+  if(f.dataset.form){const id=f.dataset.form;commit(s=>{const it=s.items.find(i=>i.id===id);if(!it)return;it.name=v.name||it.name;it.type=v.type||it.type;if(v.room)it.room=v.room;KEYS.forEach(k=>{if(k in v)it[k]=v[k];});it.notes=v.notes||'';it.updatedAt=now();},'Saved.');return;}
+  if('additem' in f.dataset){const id=uid(v.name);const rid=ui.room;commit(s=>{const it={id,room:rid,name:v.name,type:v.type||'other',notes:'',updatedAt:now()};KEYS.forEach(k=>it[k]='');s.items.push(it);});ui.editing=id;render();return;}
+  if('roomform' in f.dataset){const id=uid(v.name);commit(s=>{s.rooms.push({id,name:v.name,order:Math.max(-1,...s.rooms.map(r=>r.order))+1,updatedAt:now()});},'Tab added.');ui.room=id;LS.set('tab',id);render();return;}
+  if('renameform' in f.dataset){const rid=ui.room;commit(s=>{const r=s.rooms.find(x=>x.id===rid);if(r){r.name=v.name||r.name;r.updatedAt=now();}},'Tab renamed.');return;}
+  if('setup' in f.dataset){
+    const first=!cfg.token;
+    cfg.owner=v.owner;cfg.repo=v.repo;cfg.device=v.device||'';if(v.token)cfg.token=v.token;
+    LS.set('cfg',cfg);ui.settings=false;msg=first?'Connected. Fetching your list…':'Settings saved.';render();doSync();return;
+  }
+});
+window.addEventListener('online',()=>{renderBg();doSync();});
+window.addEventListener('offline',renderBg);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')doSync();});
+setInterval(()=>{if(!sync.busy)renderBg();},60000);
+
+render();
+doSync();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+})();
+</script>
+</body>
+</html>
