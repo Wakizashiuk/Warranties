@@ -24,6 +24,8 @@ https://wakizashiuk.github.io/Warranties/ from the `main` branch of this repo.
 - Ask before assuming when a request is ambiguous; Dave prefers questions to guesses.
 - He's comfortable with GitHub and web work but isn't reading the code line by line, so explain outcomes in plain
   English (UK spelling, dates like 21 Oct 2026). Say what he needs to do on his phone, if anything.
+- Commit as `Wakizashiuk <188109147+Wakizashiuk@users.noreply.github.com>`. GitHub's email privacy setting rejects
+  pushes from his personal address.
 - After pushing to `main`, GitHub Pages takes 1–2 minutes. Phones pick up the new version on the next launch; if not,
   tell him to fully close the installed app and reopen it once.
 
