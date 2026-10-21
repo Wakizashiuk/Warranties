@@ -65,7 +65,10 @@ with sync_playwright() as p:
     a.wait_for_selector('text=Start fresh')
     check('missing-file banner', True)
     a.set_input_files('#importfile', DATA)
-    wait_js(a, "document.querySelector('#pill').textContent.includes('Synced')")
+    for _ in range(300):  # wait for the import to reach the mock GitHub (the pill says "Synced never" before this)
+        if remote['content'] is not None: break
+        a.wait_for_timeout(100)
+    wait_js(a, "document.querySelector('#pill').textContent.includes('Synced') && !document.querySelector('#pill').textContent.includes('never')")
     check('imported + pushed', remote['content'] is not None and len(rdata()['items']) == 13)
     check('4 tabs', len(rdata()['rooms']) == 4)
     a.screenshot(path=SHOTS + '/2-overview.png', full_page=True)

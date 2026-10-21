@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Security policy. If you edit an inline script block, its sha256 hash below must be updated or the app will not run. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-aTuE1YQRfvNxHROt8L2arsISuyJCzyB9mAph6+MPf+k=' 'sha256-zE+2rJzt3bkp9E6D5nApeZYXD63HynfLR57rJOoEyVo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.github.com blob: data:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-aTuE1YQRfvNxHROt8L2arsISuyJCzyB9mAph6+MPf+k=' 'sha256-RLHiXVYiUp8emejvRIqwOpZmY4xI0R7OwscUvpfCGtw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.github.com blob: data:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b7a86">
 <meta name="robots" content="noindex, nofollow">
@@ -114,6 +114,10 @@ h3{font-size:15px;margin:0 0 10px}
 .vzoom button{min-width:40px}
 a.vbtn{display:inline-flex;align-items:center;text-decoration:none;font-weight:600;border:1px solid #55636f;border-radius:8px;color:#fff;padding:6px 11px;font-size:13px}
 a.vbtn[hidden]{display:none}
+.vcount{font-size:13px;color:#c3ccd6;white-space:nowrap}
+.vnav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:64px;padding:0;border-radius:12px;background:rgba(11,15,20,.6);color:#fff;border:1px solid #55636f;font-size:30px;line-height:1;display:flex;align-items:center;justify-content:center}
+.vnav.prev{left:6px}.vnav.next{right:6px}
+@media (hover:hover){.vnav:hover{background:rgba(11,15,20,.85)}}
 </style>
 </head>
 <body>
@@ -465,13 +469,22 @@ function openViewer(id){
   vstate={id,confirm:false,zoom:1,pdf:null,gen:vstate.gen+1};
   const it=state.items.find(i=>i.id===f.item)||{};
   viewer.hidden=false;document.body.style.overflow='hidden';
-  viewer.innerHTML='<div class="vbar"><b id="vtitle">'+esc(f.name)+'</b>'+
+  const sib=docsOf(f.item),pos=sib.findIndex(x=>x.id===f.id),many=sib.length>1;
+  viewer.innerHTML='<div class="vbar"><b id="vtitle">'+esc(f.name)+'</b>'+(many?'<span class="vcount" id="vcount">'+(pos+1)+' of '+sib.length+'</span>':'')+
     (f.kind==='pdf'?'<span class="vzoom"><button class="ghost small" data-vzoom="-1" aria-label="Zoom out">−</button><button class="ghost small" data-vzoom="1" aria-label="Zoom in">+</button></span>':'')+
     '<a class="ghost small vbtn" id="vdl" hidden>Download</a><button class="ghost small" data-vclose>Close</button></div>'+
+    (many?'<button class="vnav prev" data-vnav="-1" aria-label="Previous document">\u2039</button><button class="vnav next" data-vnav="1" aria-label="Next document">\u203a</button>':'')+
     '<div class="vbody'+(f.kind==='pdf'?' vpdf':'')+'" id="vbody"><p>Loading…</p></div>'+
     '<form class="vfoot" data-vrename id="vfoot"></form>'+
     '<p style="margin:0 12px 10px;font-size:12px;color:#9aa8b8">'+esc(it.name||'')+(f.addedAt?' · added '+new Date(f.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'')+(f.by?' by '+esc(f.by):'')+'</p>';
   drawFoot();loadViewer(f);
+}
+function navDoc(step){
+  const f=state.files.find(x=>x.id===vstate.id);if(!f)return;
+  const sib=docsOf(f.item);if(sib.length<2)return;
+  const i=sib.findIndex(x=>x.id===f.id),next=sib[(i+step+sib.length)%sib.length];
+  if(vstate.pdf){try{vstate.pdf.destroy();}catch(e){}}
+  openViewer(next.id);
 }
 function drawFoot(){
   const f=state.files.find(x=>x.id===vstate.id),el=document.getElementById('vfoot');if(!f||!el)return;
@@ -511,6 +524,7 @@ async function renderPdf(gen){
 viewer.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;const d=t.dataset;
   if('vclose' in d){closeViewer();return;}
+  if(d.vnav){navDoc(Number(d.vnav));return;}
   if(d.vzoom){const z=[0.75,1,1.5,2,3],i=z.indexOf(vstate.zoom),ni=Math.max(0,Math.min(z.length-1,i+Number(d.vzoom)));if(z[ni]!==vstate.zoom){vstate.zoom=z[ni];vstate.gen++;renderPdf(vstate.gen);}return;}
   if('vask' in d){vstate.confirm=true;drawFoot();return;}
   if('vdel' in d){
@@ -525,7 +539,20 @@ viewer.addEventListener('submit',e=>{
   const f=state.files.find(x=>x.id===id),t=document.getElementById('vtitle'),dl=document.getElementById('vdl');
   if(t)t.textContent=name;if(dl&&f)dl.download=safeName(name)+'.'+fileExt(f);vstate.confirm=false;drawFoot();
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!viewer.hidden)closeViewer();});
+document.addEventListener('keydown',e=>{
+  if(viewer.hidden)return;
+  if(e.key==='Escape'){closeViewer();return;}
+  if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&!(e.target&&e.target.matches&&e.target.matches('input,textarea,select'))){e.preventDefault();navDoc(e.key==='ArrowLeft'?-1:1);}
+});
+let swipe=null;
+viewer.addEventListener('touchstart',e=>{swipe=(e.touches.length===1&&e.target.closest('#vbody'))?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null;},{passive:true});
+viewer.addEventListener('touchmove',e=>{if(e.touches.length>1)swipe=null;},{passive:true});
+viewer.addEventListener('touchend',e=>{
+  if(!swipe||!e.changedTouches.length)return;
+  const dx=e.changedTouches[0].clientX-swipe.x,dy=e.changedTouches[0].clientY-swipe.y;swipe=null;
+  const zoomed=vstate.zoom!==1||(window.visualViewport&&window.visualViewport.scale>1.05);
+  if(!zoomed&&Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)navDoc(dx<0?1:-1);
+},{passive:true});
 
 /* ---------- events ---------- */
 function readForm(f){const fd=new FormData(f),o={};for(const[k,v]of fd.entries())o[k]=String(v).trim();return o;}

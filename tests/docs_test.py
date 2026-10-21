@@ -74,6 +74,26 @@ with sync_playwright() as p:
     c.screenshot(path=SHOTS+'/8-viewer.png')
     with c.expect_download() as dli: c.click('#vdl')
     check('photo download is a jpg', dli.value.suggested_filename.endswith('.jpg'))
+    # cycle through the item's documents without closing
+    title=lambda: c.locator('#vtitle').inner_text()
+    check('counter shows 1 of 3', c.locator('#vcount').inner_text()=='1 of 3')
+    t1=title(); c.click('.vnav.next'); c.wait_for_timeout(200)
+    check('next arrow moves to document 2 ('+title()+')', title()!=t1 and c.locator('#vcount').inner_text()=='2 of 3')
+    c.keyboard.press('ArrowRight'); c.wait_for_selector('#pdfpages canvas')
+    check('right arrow key moves to the PDF and renders it', c.locator('#vcount').inner_text()=='3 of 3')
+    c.click('.vnav.next'); c.wait_for_selector('#viewer img')
+    check('next wraps round to document 1', c.locator('#vcount').inner_text()=='1 of 3' and title()==t1)
+    c.click('.vnav.prev'); c.wait_for_timeout(300)
+    check('previous arrow wraps back to document 3', c.locator('#vcount').inner_text()=='3 of 3')
+    c.keyboard.press('ArrowLeft'); c.wait_for_timeout(200)
+    c.evaluate('''(()=>{const b=document.getElementById('vbody');const mk=(x)=>new Touch({identifier:1,target:b,clientX:x,clientY:300});
+      b.dispatchEvent(new TouchEvent('touchstart',{bubbles:true,touches:[mk(300)],changedTouches:[mk(300)]}));
+      b.dispatchEvent(new TouchEvent('touchend',{bubbles:true,touches:[],changedTouches:[mk(120)]}));})()''')
+    c.wait_for_timeout(300)
+    check('swipe left moves to the next document', c.locator('#vcount').inner_text()=='3 of 3')
+    c.keyboard.press('ArrowRight'); c.wait_for_selector('#viewer img'); c.wait_for_timeout(200)
+    check('back on document 1 for the rest of the test', title()==t1)
+    c.screenshot(path=SHOTS+'/8b-viewer-arrows.png')
     # rename
     c.fill('#viewer input[name=name]','Boiler receipt'); c.click('#viewer button[type=submit]'); synced(c)
     check('rename synced', any(f['name']=='Boiler receipt' for f in meta()))

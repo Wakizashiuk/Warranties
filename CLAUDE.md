@@ -64,6 +64,8 @@ https://wakizashiuk.github.io/Warranties/ from the `main` branch of this repo.
 - **Documents:** photos are shrunk in the browser to about 500 KB JPEG (`shrink()`), PDFs up to 15 MB are uploaded as
   they are. Adding, opening and deleting documents need a connection; the viewer says so politely when offline.
   The viewer renders PDFs in-app with PDF.js (`isEvalSupported:false`), with zoom and a Download button.
+  Prev/next arrows (`navDoc()`), ←/→ keys and a horizontal swipe (ignored while zoomed) cycle through the
+  same item's documents, wrapping round, with an "N of M" counter.
 - **Rendering:** `render()` rebuilds `#root` from state. Background events (sync finishing, going on/offline, the
   1-minute timer) call `renderBg()`, which only updates the sync pill while a form is open, so typing is never wiped.
 
