@@ -23,3 +23,15 @@ This repo holds **only the app code**. The actual warranty list lives in a separ
 4. **On each phone:** open the Pages link, paste the token, give the device a name, then use the browser menu → Add to Home screen.
 
 If a phone is lost, delete that device's token on GitHub; the other phone keeps working.
+
+## Working on the app
+
+The app is a single `index.html` with no build step. `CLAUDE.md` has the full guide (data format, sync and merge
+rules, security policy, testing). Before pushing:
+
+```bash
+pip install playwright pillow && python3 -m playwright install chromium   # once
+tests/run_all.sh
+```
+
+If you edit an inline script in `index.html`, run `python3 tools/update_csp.py` to refresh the security policy hashes.

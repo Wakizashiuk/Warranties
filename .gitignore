@@ -1,0 +1,8 @@
+# Test output (screenshots, generated sample files)
+tests/.output/
+__pycache__/
+
+# Never commit real data to this public repo. It lives in the private Warranties-data repo.
+/warranties.json
+/warranties-backup-*.json
+/files/
